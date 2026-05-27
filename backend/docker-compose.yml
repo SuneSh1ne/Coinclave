@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: coinclave_db
+    environment:
+      POSTGRES_USER: coinclave
+      POSTGRES_PASSWORD: coinclave123
+      POSTGRES_DB: coinclave
+    ports:
+      - "5433:5432"  # Поменял порт с 5432 на 5433
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coinclave"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: coinclave_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@coinclave.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5051:80"  # Поменял порт с 5050 на 5051, чтобы не конфликтовать с твоим pgAdmin
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

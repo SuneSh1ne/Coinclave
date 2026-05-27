@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+
+# Виртуальное окружение
+venv/
+env/
+ENV/
+.venv
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Файлы проекта
+.env
+.env.local
+.env.*.local
+
+# Логи
+*.log
+logs/
+*.log
+
+# База данных
+*.db
+*.sqlite
+*.sqlite3
+
+# Миграции Alembic (оставляем только структуру, но можно и их игнорировать)
+# alembic/versions/*.py
+# !alembic/versions/.gitkeep
+
+# Загруженные файлы
+uploads/
+media/
+static/uploads/
+
+# Отчеты и временные файлы
+*.pdf
+*.tmp
+*.temp
+
+# Тесты и покрытие
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Файлы зависимостей (если нужно генерировать заново)
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Сборка и дистрибутивы
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# Докер
+*.pid
+
+# Конфиги с секретами
+config.local.py
+settings.local.py
+
+# Файлы сгенерированные при запуске
+*.pid
+.coverage
+.tox
