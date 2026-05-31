@@ -80,6 +80,31 @@ export const useCoinsStore = defineStore('coins', {
         condition: null,
         search: ''
       }
+    },
+
+    async fetchCoins(limit = 50, offset = 0) {
+      if (this.loading) return
+      this.loading = true
+      try {
+        const params = {
+          limit,
+          offset,
+          ...this.filters
+        }
+        Object.keys(params).forEach(key => {
+          if (params[key] === null || params[key] === '') {
+            delete params[key]
+          }
+        })
+        
+        const response = await api.get('/api/coins', { params })
+        this.items = response.data.items
+        this.total = response.data.total
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

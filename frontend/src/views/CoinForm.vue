@@ -102,7 +102,14 @@
 
         <div class="form-group">
           <label>Изображения</label>
-          <div class="upload-area" @dragover.prevent @drop.prevent="handleDrop">
+          
+          <!-- Область загрузки с превью внутри -->
+          <div 
+            class="upload-area" 
+            :class="{ 'has-images': allImagesPreview.length > 0 }"
+            @dragover.prevent 
+            @drop.prevent="handleDrop"
+          >
             <input 
               type="file" 
               ref="fileInput"
@@ -111,38 +118,42 @@
               @change="handleFiles"
               style="display: none"
             >
-            <button type="button" class="upload-btn" @click="$refs.fileInput.click()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14"/>
+            
+            <!-- Превью изображений внутри области -->
+            <div v-if="allImagesPreview.length > 0" class="upload-preview-grid">
+              <div v-for="(img, idx) in allImagesPreview" :key="idx" class="upload-preview-item">
+                <img :src="img.url" :alt="'Изображение ' + (idx + 1)">
+                <button type="button" class="upload-remove-btn" @click.stop="removeImage(idx)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+                <span class="upload-preview-label">{{ getImageLabelByIndex(idx) }}</span>
+              </div>
+              
+              <!-- Кнопка добавления ещё фото (если меньше 4) -->
+              <div v-if="allImagesPreview.length < 4" class="upload-add-more" @click="$refs.fileInput.click()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Добавить</span>
+              </div>
+            </div>
+            
+            <!-- Пустое состояние области -->
+            <div v-else class="upload-empty" @click="$refs.fileInput.click()">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+                <circle cx="8.5" cy="8.5" r="2.5"/>
+                <polyline points="21 15 16 10 5 21"/>
               </svg>
-              Выбрать изображения
-            </button>
-            <p class="upload-hint">или перетащите файлы сюда</p>
-            <p class="upload-limit">До 4 изображений (JPEG, PNG, WebP, до 5MB)</p>
+              <p>Нажмите или перетащите изображения</p>
+              <span>JPEG, PNG, WebP, до 5MB</span>
+            </div>
           </div>
           
-          <div v-if="previewImages.length || existingImages.length" class="preview-grid">
-            <div v-for="(img, idx) in existingImages" :key="'existing-' + img.id" class="preview-item">
-              <img :src="getImageUrl(img.image_path)" alt="Монета">
-              <span class="preview-label">{{ img.is_obverse ? 'Аверс' : 'Реверс' }}</span>
-              <button type="button" class="remove-btn" @click="removeExistingImage(img.id)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-            <div v-for="(img, idx) in previewImages" :key="'new-' + idx" class="preview-item">
-              <img :src="img.url" alt="Новое изображение">
-              <span class="preview-label">{{ idx === 0 && existingImages.length === 0 ? 'Аверс' : 'Реверс' }}</span>
-              <button type="button" class="remove-btn" @click="removePreview(idx)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-          </div>
+          <p class="upload-hint">Максимум 4 изображения. Первое будет аверсом, второе - реверсом.</p>
         </div>
 
         <div class="form-actions">
@@ -154,10 +165,10 @@
         </div>
 
         <div v-if="error" class="error-alert">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="#ef4444" stroke-width="2"/>
+            <rect x="10.5" y="6" width="3" height="9" rx="1.5" fill="#ef4444"/>
+            <circle cx="12" cy="18" r="1.5" fill="#ef4444"/>
           </svg>
           {{ error }}
         </div>
@@ -190,16 +201,51 @@ const form = reactive({
   estimated_value: ''
 })
 
-const images = ref([])
-const previewImages = ref([])
+// Новые файлы
+const newImages = ref([])
+// Превью всех изображений (существующие + новые)
+const allImagesPreview = ref([])
+// Существующие изображения из БД
 const existingImages = ref([])
-const imagesToDelete = ref([])
 
 const getImageUrl = (path) => `http://localhost:8000/uploads/${path}`
+
+const getImageLabelByIndex = (idx) => {
+  if (idx === 0) return 'Аверс'
+  if (idx === 1) return 'Реверс'
+  return `Фото ${idx + 1}`
+}
+
+// Обновить общее превью
+const updateAllPreview = () => {
+  const previews = []
+  
+  // Добавляем существующие изображения
+  for (const img of existingImages.value) {
+    previews.push({
+      url: getImageUrl(img.image_path),
+      isExisting: true,
+      id: img.id,
+      is_obverse: img.is_obverse
+    })
+  }
+  
+  // Добавляем новые изображения
+  for (const img of newImages.value) {
+    previews.push({
+      url: URL.createObjectURL(img.file),
+      isExisting: false,
+      file: img.file
+    })
+  }
+  
+  allImagesPreview.value = previews
+}
 
 const handleFiles = (e) => {
   const files = Array.from(e.target.files)
   addFiles(files)
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 const handleDrop = (e) => {
@@ -208,42 +254,58 @@ const handleDrop = (e) => {
 }
 
 const addFiles = (files) => {
-  const totalImages = images.value.length + existingImages.value.length + files.length
+  const totalImages = existingImages.value.length + newImages.value.length + files.length
   
   if (totalImages > 4) {
     error.value = 'Максимум 4 изображения'
     return
   }
   
-  files.forEach(file => {
+  for (const file of files) {
     if (!file.type.match('image.*')) {
       error.value = 'Можно загружать только изображения'
-      return
+      continue
     }
     if (file.size > 5 * 1024 * 1024) {
       error.value = 'Файл слишком большой (макс 5MB)'
-      return
+      continue
     }
-    images.value.push(file)
     
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      previewImages.value.push({ url: e.target.result, file: file })
-    }
-    reader.readAsDataURL(file)
-  })
+    newImages.value.push({ file })
+  }
+  
+  updateAllPreview()
   error.value = ''
 }
 
-const removePreview = (idx) => {
-  previewImages.value.splice(idx, 1)
-  images.value.splice(idx, 1)
+const removeImage = (idx) => {
+  const imageToRemove = allImagesPreview.value[idx]
+  
+  if (imageToRemove.isExisting) {
+    // Удаляем существующее изображение
+    const existingIdx = existingImages.value.findIndex(img => img.id === imageToRemove.id)
+    if (existingIdx !== -1) {
+      existingImages.value.splice(existingIdx, 1)
+    }
+  } else {
+    // Удаляем новое изображение
+    const newIdx = newImages.value.findIndex(img => img.file === imageToRemove.file)
+    if (newIdx !== -1) {
+      newImages.value.splice(newIdx, 1)
+    }
+  }
+  
+  updateAllPreview()
 }
 
-const removeExistingImage = async (imageId) => {
+const removeExistingImageFromServer = async (imageId) => {
   try {
     await api.delete(`/api/coins/images/${imageId}`)
-    existingImages.value = existingImages.value.filter(img => img.id !== imageId)
+    const idx = existingImages.value.findIndex(img => img.id === imageId)
+    if (idx !== -1) {
+      existingImages.value.splice(idx, 1)
+      updateAllPreview()
+    }
   } catch (e) {
     error.value = 'Ошибка при удалении изображения'
   }
@@ -265,13 +327,17 @@ const loadCoin = async () => {
     form.purchase_price = coin.purchase_price
     form.estimated_value = coin.estimated_value
     
-    existingImages.value = coin.images || []
+    if (coin.images && coin.images.length) {
+      existingImages.value = coin.images
+      updateAllPreview()
+    }
   } catch (e) {
     error.value = 'Ошибка загрузки монеты'
   }
 }
 
 const handleSubmit = async () => {
+  // Валидация
   if (!form.name || !form.year || !form.country || !form.denomination || !form.estimated_value) {
     error.value = 'Заполните все обязательные поля'
     return
@@ -281,32 +347,64 @@ const handleSubmit = async () => {
   error.value = ''
   
   try {
-    const formData = new FormData()
-    formData.append('name', form.name)
-    formData.append('year', form.year)
-    formData.append('country', form.country)
-    formData.append('denomination', form.denomination)
-    formData.append('metal', form.metal)
-    formData.append('condition', form.condition)
-    if (form.purchase_price) formData.append('purchase_price', form.purchase_price)
-    formData.append('estimated_value', form.estimated_value)
-    
-    images.value.forEach(img => {
-      formData.append('images', img)
-    })
-    
     if (isEdit.value) {
-      await api.put(`/api/coins/${route.params.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      // При редактировании отправляем JSON (без фото)
+      const updateData = {
+        name: form.name,
+        year: parseInt(form.year),
+        country: form.country,
+        denomination: form.denomination,
+        metal: form.metal,
+        condition: form.condition,
+        estimated_value: parseFloat(form.estimated_value)
+      }
+      
+      // Добавляем purchase_price только если он есть
+      if (form.purchase_price) {
+        updateData.purchase_price = parseFloat(form.purchase_price)
+      }
+      
+      console.log('Отправляем данные:', updateData)  // Для отладки
+      
+      const response = await api.put(`/api/coins/${route.params.id}`, updateData)
+      console.log('Ответ сервера:', response.data)
+      
+      // Отдельно загружаем новые изображения, если есть
+      if (newImages.value.length > 0) {
+        const formData = new FormData()
+        for (const img of newImages.value) {
+          formData.append('images', img.file)
+        }
+        await api.post(`/api/coins/${route.params.id}/images`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      }
+      
+      router.push('/collection')
     } else {
+      // При создании отправляем FormData с фото
+      const formData = new FormData()
+      formData.append('name', form.name)
+      formData.append('year', form.year.toString())
+      formData.append('country', form.country)
+      formData.append('denomination', form.denomination)
+      formData.append('metal', form.metal)
+      formData.append('condition', form.condition)
+      if (form.purchase_price) formData.append('purchase_price', form.purchase_price.toString())
+      formData.append('estimated_value', form.estimated_value.toString())
+      
+      for (const img of newImages.value) {
+        formData.append('images', img.file)
+      }
+      
       await api.post('/api/coins', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
+      
+      router.push('/collection')
     }
-    
-    router.push('/')
   } catch (e) {
+    console.error('Ошибка:', e.response?.data || e.message)
     error.value = e.response?.data?.detail || 'Ошибка сохранения'
   } finally {
     loading.value = false
@@ -380,6 +478,7 @@ onMounted(() => {
   border-radius: 12px;
   font-size: 14px;
   transition: all 0.2s;
+  background: white;
 }
 
 .form-group input:focus,
@@ -389,14 +488,13 @@ onMounted(() => {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* Область загрузки */
 .upload-area {
   border: 2px dashed #e2e8f0;
   border-radius: 16px;
-  padding: 24px;
-  text-align: center;
   background: #f8fafc;
-  cursor: pointer;
   transition: all 0.2s;
+  min-height: 200px;
 }
 
 .upload-area:hover {
@@ -404,52 +502,58 @@ onMounted(() => {
   background: #eff6ff;
 }
 
-.upload-btn {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+.upload-area.has-images {
+  padding: 12px;
 }
 
-.upload-hint {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.upload-limit {
-  font-size: 11px;
-  color: #cbd5e1;
-  margin-top: 8px;
-}
-
-.preview-grid {
+.upload-empty {
   display: flex;
-  gap: 16px;
-  margin-top: 20px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  cursor: pointer;
+}
+
+.upload-empty svg {
+  stroke: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.upload-empty p {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.upload-empty span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.upload-preview-grid {
+  display: flex;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.preview-item {
+.upload-preview-item {
   position: relative;
   width: 100px;
   height: 100px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
+  background: white;
 }
 
-.preview-item img {
+.upload-preview-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.preview-label {
+.upload-preview-label {
   position: absolute;
   bottom: 4px;
   left: 4px;
@@ -460,7 +564,7 @@ onMounted(() => {
   border-radius: 10px;
 }
 
-.remove-btn {
+.upload-remove-btn {
   position: absolute;
   top: 4px;
   right: 4px;
@@ -477,8 +581,43 @@ onMounted(() => {
   transition: background 0.2s;
 }
 
-.remove-btn:hover {
+.upload-remove-btn:hover {
   background: #ef4444;
+}
+
+.upload-add-more {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.upload-add-more:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.upload-add-more svg {
+  stroke: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.upload-add-more span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.upload-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 8px;
 }
 
 .form-actions {
@@ -508,6 +647,23 @@ onMounted(() => {
   background: #e2e8f0;
 }
 
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .spinner {
   width: 18px;
   height: 18px;
@@ -518,17 +674,92 @@ onMounted(() => {
   animation: spin 0.6s linear infinite;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .error-alert {
   margin-top: 20px;
   padding: 12px 16px;
   background: #fef2f2;
   border: 1px solid #fee2e2;
-  border-radius: 12px;
+  border-radius: 30px;
   color: #ef4444;
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* Тёмная тема */
+body.dark-theme .form-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .form-header {
+  border-color: #334155;
+}
+
+body.dark-theme .form-header h1 {
+  color: #f1f5f9;
+}
+
+body.dark-theme .form-header p {
+  color: #94a3b8;
+}
+
+body.dark-theme .form-group label {
+  color: #cbd5e1;
+}
+
+body.dark-theme .form-group input,
+body.dark-theme .form-group select {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+body.dark-theme .upload-area {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .upload-area:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+body.dark-theme .upload-empty p {
+  color: #94a3b8;
+}
+
+body.dark-theme .upload-preview-item {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .upload-add-more {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .upload-add-more:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+body.dark-theme .form-actions {
+  border-color: #334155;
+}
+
+body.dark-theme .btn-secondary {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+body.dark-theme .btn-secondary:hover {
+  background: #475569;
 }
 
 @media (max-width: 640px) {
@@ -538,6 +769,14 @@ onMounted(() => {
   
   .form-card {
     padding: 20px;
+  }
+  
+  .form-header {
+    padding: 20px;
+  }
+  
+  .upload-preview-grid {
+    justify-content: center;
   }
 }
 </style>

@@ -1,35 +1,15 @@
 <template>
-  <div class="user-page" v-if="user">
-    <!-- Кнопка назад сверху -->
-    <div class="nav-top">
-      <router-link to="/" class="back-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        Назад
-      </router-link>
-    </div>
-
-    <div class="user-header">
-      <div class="user-avatar-large">
-        <span>{{ userInitial }}</span>
+  <div class="home-page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Главная</h1>
+        <p class="page-subtitle">Новые поступления из коллекций пользователей</p>
       </div>
-      <div class="user-info">
-        <h1>{{ displayName }}</h1>
-        <p class="user-stats">{{ userStats.coins_count || 0 }} монет • {{ formatPrice(userStats.total_value || 0) }} ₽</p>
-      </div>
-      <button 
-        v-if="isAuthenticated && currentUserId !== parseInt(route.params.id)" 
-        class="exchange-btn-header"
-        @click="openExchangeModal"
-      >
-        Предложить обмен
-      </button>
     </div>
 
     <div class="filter-bar">
       <div class="filter-header">
-        <h3 class="filter-title">Фильтрация коллекции</h3>
+        <h3 class="filter-title">Фильтрация монет</h3>
         <button @click="resetFilters" class="reset-btn">Сбросить все</button>
       </div>
       
@@ -39,20 +19,20 @@
             type="text" 
             v-model="filters.search" 
             placeholder="Поиск по названию..."
-            @input="debouncedFetchCoins"
+            @input="debouncedFetchFeed"
             class="filter-input"
           >
         </div>
         
         <div class="filter-group">
-          <select v-model="filters.country" @change="fetchCoins" class="filter-select">
+          <select v-model="filters.country" @change="fetchFeed" class="filter-select">
             <option value="">Все страны</option>
             <option v-for="c in availableCountries" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
         
         <div class="filter-group">
-          <select v-model="filters.metal" @change="fetchCoins" class="filter-select">
+          <select v-model="filters.metal" @change="fetchFeed" class="filter-select">
             <option value="">Все металлы</option>
             <option value="gold">Золото</option>
             <option value="silver">Серебро</option>
@@ -70,7 +50,7 @@
             type="number" 
             v-model="filters.year_from" 
             placeholder="Год от"
-            @input="fetchCoins"
+            @input="fetchFeed"
             class="filter-input"
           >
         </div>
@@ -80,13 +60,13 @@
             type="number" 
             v-model="filters.year_to" 
             placeholder="Год до"
-            @input="fetchCoins"
+            @input="fetchFeed"
             class="filter-input"
           >
         </div>
         
         <div class="filter-group">
-          <select v-model="filters.condition" @change="fetchCoins" class="filter-select">
+          <select v-model="filters.condition" @change="fetchFeed" class="filter-select">
             <option value="">Все состояния</option>
             <option value="poor">Poor</option>
             <option value="fair">Fair</option>
@@ -101,60 +81,79 @@
       </div>
     </div>
 
-    <div v-if="loading" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>Загрузка коллекции пользователя...</p>
-    </div>
+    <div class="feed-section">
+      <div v-if="loading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Загрузка монет...</p>
+      </div>
 
-    <div v-else-if="filteredCoins.length === 0" class="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="none" stroke="#94a3b8" stroke-width="2"/>
-        <rect x="10.5" y="6" width="3" height="9" rx="1.5" fill="#94a3b8"/>
-        <circle cx="12" cy="18" r="1.5" fill="#94a3b8"/>
-      </svg>
-      <h3>Коллекция пуста</h3>
-      <p>У этого пользователя пока нет монет</p>
-    </div>
+      <div v-else-if="feed.length === 0" class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="#94a3b8" stroke-width="2"/>
+          <rect x="10.5" y="6" width="3" height="9" rx="1.5" fill="#94a3b8"/>
+          <circle cx="12" cy="18" r="1.5" fill="#94a3b8"/>
+        </svg>
+        <h3>Нет монет в каталоге</h3>
+        <p>Будьте первым, кто добавит монету!</p>
+      </div>
 
-    <div v-else class="grid">
-      <div v-for="coin in filteredCoins" :key="coin.id" class="user-coin-card" @click="showDetail(coin)">
-        <div class="coin-image">
-          <img v-if="coin.images && coin.images[0]" :src="getImageUrl(coin.images[0].image_path)" :alt="coin.name">
-          <div v-else class="image-placeholder">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="2" y="2" width="20" height="20" rx="2.18"/>
-              <circle cx="8.5" cy="8.5" r="2.5"/>
-              <polyline points="21 15 16 10 5 21"/>
-            </svg>
+      <div v-else class="feed-grid">
+        <div v-for="(item, index) in feed" :key="item.id" class="feed-card" :style="{ animationDelay: (index * 0.05) + 's' }">
+          <div class="card-image" @click="openDetailModal(item)">
+            <img v-if="item.images && item.images[0]" :src="getImageUrl(item.images[0].image_path)" :alt="item.name">
+            <div v-else class="image-placeholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+                <circle cx="8.5" cy="8.5" r="2.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
           </div>
-        </div>
-        <div class="coin-info">
-          <h3 class="coin-title">{{ coin.name }}</h3>
-          <div class="coin-meta">
-            <span>{{ coin.year }} г.</span>
-            <span class="separator">•</span>
-            <span>{{ coin.country }}</span>
+          <div class="card-info">
+            <h3 class="card-title" @click="openDetailModal(item)">{{ item.name }}</h3>
+            <div class="card-meta" @click="openDetailModal(item)">
+              <span>{{ item.year }} г.</span>
+              <span class="separator">•</span>
+              <span>{{ item.country }}</span>
+            </div>
+            <div class="card-tags" @click="openDetailModal(item)">
+              <span class="tag">{{ getMetalName(item.metal) }}</span>
+              <span class="tag condition">{{ getConditionName(item.condition) }}</span>
+            </div>
+            <div class="card-footer">
+              <div class="owner-info">
+                <span class="owner-label">Владелец:</span>
+                <span class="owner-name" @click.stop="goToUser(item.owner_id)">
+                  {{ item.owner_name }}
+                </span>
+              </div>
+              <div class="card-actions">
+                <span class="value" @click="openDetailModal(item)">{{ formatPrice(item.estimated_value) }} ₽</span>
+                <button 
+                  v-if="isAuthenticated && item.owner_id !== currentUserId" 
+                  class="offer-btn"
+                  @click.stop="openMultiExchangeModal(item)"
+                >
+                  Предложить обмен
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="coin-tags">
-            <span class="tag">{{ getMetalName(coin.metal) }}</span>
-            <span class="tag condition">{{ getConditionName(coin.condition) }}</span>
-          </div>
-          <div class="coin-value">{{ formatPrice(coin.estimated_value) }} ₽</div>
         </div>
       </div>
     </div>
 
     <!-- Модальное окно деталей монеты -->
-    <div v-if="selectedCoin" class="modal-overlay" @click.self="closeDetail">
-      <div class="modal-container">
+    <div v-if="detailModalCoin" class="modal-overlay" @click.self="closeDetailModal">
+      <div class="modal-container modal-large">
         <div class="modal-header">
-          <h3>{{ selectedCoin.name }}</h3>
-          <button class="modal-close" @click="closeDetail">×</button>
+          <h3>{{ detailModalCoin.name }}</h3>
+          <button class="modal-close" @click="closeDetailModal">×</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body modal-body-detail">
           <div class="modal-gallery">
             <div class="modal-main-image">
-              <img v-if="modalCurrentImage" :src="getImageUrl(modalCurrentImage.image_path)" :alt="selectedCoin.name">
+              <img v-if="detailCurrentImage" :src="getImageUrl(detailCurrentImage.image_path)" :alt="detailModalCoin.name">
               <div v-else class="no-image-modal">
                 <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <rect x="2" y="2" width="20" height="20" rx="2.18"/>
@@ -163,13 +162,13 @@
                 </svg>
               </div>
             </div>
-            <div class="modal-thumbnails" v-if="selectedCoin.images && selectedCoin.images.length > 1">
+            <div class="modal-thumbnails" v-if="detailModalCoin.images && detailModalCoin.images.length > 1">
               <div 
-                v-for="img in selectedCoin.images" 
+                v-for="img in detailModalCoin.images" 
                 :key="img.id" 
                 class="modal-thumb"
-                :class="{ active: modalCurrentImage?.id === img.id }"
-                @click="modalCurrentImage = img"
+                :class="{ active: detailCurrentImage?.id === img.id }"
+                @click="detailCurrentImage = img"
               >
                 <img :src="getImageUrl(img.image_path)" :alt="img.is_obverse ? 'Аверс' : 'Реверс'">
               </div>
@@ -178,43 +177,65 @@
           <div class="modal-info">
             <div class="info-row">
               <span class="info-label">Год чеканки</span>
-              <span class="info-value">{{ selectedCoin.year }}</span>
+              <span class="info-value">{{ detailModalCoin.year }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Страна</span>
-              <span class="info-value">{{ selectedCoin.country }}</span>
+              <span class="info-value">{{ detailModalCoin.country }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Номинал</span>
-              <span class="info-value">{{ selectedCoin.denomination }}</span>
+              <span class="info-value">{{ detailModalCoin.denomination }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Металл</span>
-              <span class="info-value">{{ getMetalName(selectedCoin.metal) }}</span>
+              <span class="info-value">{{ getMetalName(detailModalCoin.metal) }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Состояние</span>
               <span class="info-value">
-                <span class="condition-badge" :class="getConditionClass(selectedCoin.condition)">
-                  {{ getConditionName(selectedCoin.condition) }}
+                <span class="condition-badge" :class="getConditionClass(detailModalCoin.condition)">
+                  {{ getConditionName(detailModalCoin.condition) }}
                 </span>
               </span>
             </div>
             <div class="info-row highlight">
               <span class="info-label">Оценочная стоимость</span>
-              <span class="info-value">{{ formatPrice(selectedCoin.estimated_value) }} ₽</span>
+              <span class="info-value">{{ formatPrice(detailModalCoin.estimated_value) }} ₽</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Владелец</span>
+              <span class="info-value owner-link" @click="goToUser(detailModalCoin.owner_id)">
+                {{ detailModalCoin.owner_name }}
+              </span>
+            </div>
+            <div class="modal-actions-detail">
+              <button 
+                v-if="isAuthenticated && detailModalCoin.owner_id !== currentUserId" 
+                class="btn-offer-full"
+                @click="openMultiExchangeFromDetail"
+              >
+                Предложить обмен
+              </button>
+              <button 
+                v-if="!isAuthenticated" 
+                class="btn-offer-full"
+                @click="router.push('/login')"
+              >
+                Войдите, чтобы предложить обмен
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Модальное окно предложения обмена -->
-    <div v-if="showExchangeModal" class="modal-overlay" @click.self="closeExchangeModal">
+    <!-- Модальное окно множественного обмена -->
+    <div v-if="showMultiModal" class="modal-overlay" @click.self="closeMultiModal">
       <div class="modal-container modal-multi-exchange">
         <div class="modal-header">
-          <h3>Предложение обмена пользователю {{ displayName }}</h3>
-          <button class="modal-close" @click="closeExchangeModal">×</button>
+          <h3>Предложение обмена</h3>
+          <button class="modal-close" @click="closeMultiModal">×</button>
         </div>
         <div class="modal-body multi-exchange-body">
           <!-- Левая колонка - мои монеты (что отдаю) -->
@@ -285,7 +306,7 @@
                 v-for="coin in targetUserCoins" 
                 :key="coin.id" 
                 class="coin-select-item"
-                :class="{ selected: selectedTargetCoinIds.includes(coin.id) }"
+                :class="{ selected: selectedTargetCoinIds.includes(coin.id), preselected: coin.id === preselectedCoinId }"
                 @click="toggleTargetCoin(coin.id)"
               >
                 <div class="coin-select-image">
@@ -320,7 +341,7 @@
             </div>
           </div>
         </div>
-        <div class="exchange-summary">
+        <div class="exchange-summary" v-if="selectedMyCoinIds.length > 0 || selectedTargetCoinIds.length > 0">
           <div class="summary-row" v-if="selectedMyCoinIds.length > 0">
             <span>Я отдаю:</span>
             <span class="summary-value">{{ selectedMyCoinIds.length }} монет ({{ formatPrice(selectedMyTotalValue) }} ₽)</span>
@@ -344,87 +365,48 @@
         <div class="modal-footer">
           <div class="form-group message-group">
             <label>Сообщение (необязательно)</label>
-            <textarea v-model="exchangeMessage" class="form-textarea" rows="2" placeholder="Добавьте комментарий к предложению..."></textarea>
+            <textarea v-model="multiOfferMessage" class="form-textarea" rows="2" placeholder="Добавьте комментарий к предложению..."></textarea>
           </div>
           <div class="footer-buttons">
-            <button class="btn-secondary" @click="closeExchangeModal">Отмена</button>
+            <button class="btn-secondary" @click="closeMultiModal">Отмена</button>
             <button 
-              class="btn-primary" 
-              @click="sendExchangeOffer" 
-              :disabled="selectedMyCoinIds.length === 0 && selectedTargetCoinIds.length === 0"
-            >
-              Отправить предложение
-            </button>
+            class="btn-primary" 
+            @click="sendMultiOffer" 
+            :disabled="selectedMyCoinIds.length === 0 && selectedTargetCoinIds.length === 0"
+          >
+            Отправить предложение
+          </button>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <div v-else-if="loading" class="loading-state">
-    <div class="loading-spinner"></div>
-    <p>Загрузка...</p>
-  </div>
-
-  <div v-else class="not-found">
-    <div class="not-found-content">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="none" stroke="#ef4444" stroke-width="2"/>
-        <rect x="10.5" y="6" width="3" height="9" rx="1.5" fill="#ef4444"/>
-        <circle cx="12" cy="18" r="1.5" fill="#ef4444"/>
-      </svg>
-      <h3>Пользователь не найден</h3>
-      <router-link to="/" class="btn-primary">Вернуться на главную</router-link>
-    </div>
-  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../api'
 
-const route = useRoute()
 const router = useRouter()
-const authStore = useAuthStore()
-const user = ref(null)
-const userStats = ref({})
-const allCoins = ref([])
-const filteredCoins = ref([])
-const loading = ref(true)
-const selectedCoin = ref(null)
-const modalCurrentImage = ref(null)
+const feed = ref([])
+const loading = ref(false)
 const availableCountries = ref([])
-
-// Переменные для модального окна обмена
-const showExchangeModal = ref(false)
 const myCoins = ref([])
 const targetUserCoins = ref([])
+const currentUserId = ref(null)
+const targetUserId = ref(null)
+
+const showMultiModal = ref(false)
+const preselectedCoinId = ref(null)
 const selectedMyCoinIds = ref([])
 const selectedTargetCoinIds = ref([])
-const exchangeMessage = ref('')
+const multiOfferMessage = ref('')
 
-const isAuthenticated = computed(() => authStore.isAuthenticated || !!localStorage.getItem('token'))
-const currentUserId = ref(null)
+const detailModalCoin = ref(null)
+const detailCurrentImage = ref(null)
 
-const filters = ref({
-  search: '',
-  country: '',
-  metal: '',
-  year_from: '',
-  year_to: '',
-  condition: ''
-})
-
-const userInitial = computed(() => {
-  const name = user.value?.username || user.value?.email
-  return name ? name.charAt(0).toUpperCase() : 'U'
-})
-
-const displayName = computed(() => {
-  return user.value?.username || (user.value?.email ? user.value.email.split('@')[0] : 'Пользователь')
-})
+const isAuthenticated = computed(() => !!localStorage.getItem('token'))
 
 const selectedMyTotalValue = computed(() => {
   return myCoins.value
@@ -445,6 +427,23 @@ const allMyCoinsSelected = computed(() => {
 const allTargetCoinsSelected = computed(() => {
   return targetUserCoins.value.length > 0 && selectedTargetCoinIds.value.length === targetUserCoins.value.length
 })
+
+const filters = ref({
+  search: '',
+  country: '',
+  metal: '',
+  year_from: '',
+  year_to: '',
+  condition: ''
+})
+
+let debounceTimer = null
+const debouncedFetchFeed = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    fetchFeed()
+  }, 300)
+}
 
 const getImageUrl = (path) => `http://localhost:8000/uploads/${path}`
 
@@ -478,41 +477,56 @@ const getConditionClass = (condition) => {
   return classes[condition] || ''
 }
 
-const applyFilters = () => {
-  let result = [...allCoins.value]
-  
-  if (filters.value.search) {
-    result = result.filter(c => c.name.toLowerCase().includes(filters.value.search.toLowerCase()))
+const fetchFeed = async () => {
+  loading.value = true
+  try {
+    const params = {}
+    if (filters.value.country) params.country = filters.value.country
+    if (filters.value.metal) params.metal = filters.value.metal
+    if (filters.value.year_from) params.year_from = filters.value.year_from
+    if (filters.value.year_to) params.year_to = filters.value.year_to
+    if (filters.value.condition) params.condition = filters.value.condition
+    if (filters.value.search) params.search = filters.value.search
+    
+    const res = await api.get('/public/feed', { params })
+    feed.value = res.data
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
   }
-  if (filters.value.country) {
-    result = result.filter(c => c.country === filters.value.country)
-  }
-  if (filters.value.metal) {
-    result = result.filter(c => c.metal === filters.value.metal)
-  }
-  if (filters.value.year_from) {
-    result = result.filter(c => c.year >= parseInt(filters.value.year_from))
-  }
-  if (filters.value.year_to) {
-    result = result.filter(c => c.year <= parseInt(filters.value.year_to))
-  }
-  if (filters.value.condition) {
-    result = result.filter(c => c.condition === filters.value.condition)
-  }
-  
-  filteredCoins.value = result
 }
 
-let debounceTimer = null
-const debouncedFetchCoins = () => {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    applyFilters()
-  }, 300)
+const fetchCountries = async () => {
+  try {
+    const res = await api.get('/public/filters/countries')
+    availableCountries.value = res.data.countries
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-const fetchCoins = () => {
-  applyFilters()
+const fetchMyCoins = async () => {
+  if (!isAuthenticated.value) return
+  try {
+    const res = await api.get('/api/coins')
+    myCoins.value = res.data.items
+  } catch (e) {}
+}
+
+const fetchTargetUserCoins = async (userId) => {
+  try {
+    const res = await api.get(`/users/${userId}/collection`)
+    targetUserCoins.value = res.data.coins
+  } catch (e) {}
+}
+
+const fetchCurrentUser = async () => {
+  if (!isAuthenticated.value) return
+  try {
+    const res = await api.get('/auth/me')
+    currentUserId.value = res.data.id
+  } catch (e) {}
 }
 
 const resetFilters = () => {
@@ -524,49 +538,63 @@ const resetFilters = () => {
     year_to: '',
     condition: ''
   }
-  applyFilters()
+  fetchFeed()
 }
 
-const showDetail = (coin) => {
-  selectedCoin.value = coin
-  modalCurrentImage.value = coin.images?.[0] || null
+const goToUser = (userId) => {
+  closeDetailModal()
+  if (isAuthenticated.value) {
+    router.push(`/user/${userId}`)
+  } else {
+    router.push('/login')
+  }
+}
+
+const openDetailModal = (coin) => {
+  detailModalCoin.value = coin
+  detailCurrentImage.value = coin.images?.[0] || null
   document.body.classList.add('modal-open')
 }
 
-const closeDetail = () => {
-  selectedCoin.value = null
+const closeDetailModal = () => {
+  detailModalCoin.value = null
   document.body.classList.remove('modal-open')
 }
 
-const fetchCountries = async () => {
-  try {
-    const res = await api.get('/public/filters/countries')
-    availableCountries.value = res.data.countries
-  } catch (e) {}
+const openMultiExchangeModal = async (coin) => {
+  if (!isAuthenticated.value) {
+    router.push('/login')
+    return
+  }
+  
+  closeDetailModal()
+  
+  preselectedCoinId.value = coin.id
+  targetUserId.value = coin.owner_id
+  selectedMyCoinIds.value = []
+  selectedTargetCoinIds.value = [coin.id]
+  multiOfferMessage.value = ''
+  
+  await Promise.all([
+    fetchMyCoins(),
+    fetchTargetUserCoins(coin.owner_id)
+  ])
+  
+  showMultiModal.value = true
+  document.body.classList.add('modal-open')
 }
 
-// Функции для обмена
-const fetchCurrentUser = async () => {
-  if (!isAuthenticated.value) return
-  try {
-    const res = await api.get('/auth/me')
-    currentUserId.value = res.data.id
-  } catch (e) {}
+const openMultiExchangeFromDetail = () => {
+  openMultiExchangeModal(detailModalCoin.value)
 }
 
-const fetchMyCoins = async () => {
-  if (!isAuthenticated.value) return
-  try {
-    const res = await api.get('/api/coins')
-    myCoins.value = res.data.items
-  } catch (e) {}
-}
-
-const fetchTargetUserCoins = async () => {
-  try {
-    const res = await api.get(`/users/${route.params.id}/collection`)
-    targetUserCoins.value = res.data.coins
-  } catch (e) {}
+const closeMultiModal = () => {
+  showMultiModal.value = false
+  selectedMyCoinIds.value = []
+  selectedTargetCoinIds.value = []
+  preselectedCoinId.value = null
+  targetUserId.value = null
+  document.body.classList.remove('modal-open')
 }
 
 const toggleMyCoin = (coinId) => {
@@ -603,154 +631,80 @@ const toggleSelectAllTargetCoins = () => {
   }
 }
 
-const openExchangeModal = async () => {
-  selectedMyCoinIds.value = []
-  selectedTargetCoinIds.value = []
-  exchangeMessage.value = ''
-  await Promise.all([
-    fetchMyCoins(),
-    fetchTargetUserCoins()
-  ])
-  showExchangeModal.value = true
-  document.body.classList.add('modal-open')
-}
-
-const closeExchangeModal = () => {
-  showExchangeModal.value = false
-  document.body.classList.remove('modal-open')
-}
-
-const sendExchangeOffer = async () => {
+const sendMultiOffer = async () => {
+  // Проверяем, что выбраны монеты хотя бы в одной колонке
   if (selectedMyCoinIds.value.length === 0 && selectedTargetCoinIds.value.length === 0) {
     return
   }
   
   try {
-    await api.post('/exchange/offers/batch', {
-      offered_coin_ids: selectedMyCoinIds.value.length > 0 ? selectedMyCoinIds.value : null,
-      requested_coin_ids: selectedTargetCoinIds.value.length > 0 ? selectedTargetCoinIds.value : null,
-      to_user_id: parseInt(route.params.id),
-      message: exchangeMessage.value
-    })
-    closeExchangeModal()
+    // Подарок: только свои монеты
+    if (selectedMyCoinIds.value.length > 0 && selectedTargetCoinIds.value.length === 0) {
+      // Получаем владельца из preselectedCoinId
+      const targetCoin = feed.value.find(c => c.id === preselectedCoinId.value)
+      if (!targetCoin) {
+        return
+      }
+      
+      await api.post('/exchange/offers/batch', {
+        offered_coin_ids: selectedMyCoinIds.value,
+        requested_coin_ids: null,
+        to_user_id: targetCoin.owner_id,
+        message: multiOfferMessage.value
+      })
+    }
+    // Запрос: только чужие монеты
+    else if (selectedMyCoinIds.value.length === 0 && selectedTargetCoinIds.value.length > 0) {
+      await api.post('/exchange/offers/batch', {
+        offered_coin_ids: null,
+        requested_coin_ids: selectedTargetCoinIds.value,
+        to_user_id: null,
+        message: multiOfferMessage.value
+      })
+    }
+    // Обмен: и свои, и чужие
+    else {
+      await api.post('/exchange/offers/batch', {
+        offered_coin_ids: selectedMyCoinIds.value,
+        requested_coin_ids: selectedTargetCoinIds.value,
+        to_user_id: null,
+        message: multiOfferMessage.value
+      })
+    }
+    
+    closeMultiModal()
   } catch (e) {
-    alert(e.response?.data?.detail || 'Ошибка при отправке предложения')
   }
 }
 
-onMounted(async () => {
-  loading.value = true
-  const userId = route.params.id
-  
-  await fetchCurrentUser()
-  
-  try {
-    const statsRes = await api.get(`/users/${userId}/stats`)
-    const collectionRes = await api.get(`/users/${userId}/collection`)
-    
-    user.value = { 
-      email: statsRes.data.email, 
-      username: statsRes.data.username 
-    }
-    
-    allCoins.value = collectionRes.data.coins
-    filteredCoins.value = allCoins.value
-    userStats.value = statsRes.data
-    
-    await fetchCountries()
-  } catch (e) {
-    if (e.response?.status === 404) {
-      user.value = null
-    }
-  } finally {
-    loading.value = false
-  }
+onMounted(() => {
+  fetchFeed()
+  fetchCountries()
+  fetchCurrentUser()
 })
 </script>
 
 <style scoped>
-.user-page {
+.home-page {
   max-width: 1400px;
   margin: 0 auto;
   padding: 32px 24px;
 }
 
-/* Кнопка назад сверху */
-.nav-top {
-  margin-bottom: 24px;
-}
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #64748b;
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.back-link:hover {
-  color: #3b82f6;
-}
-
-.user-header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+.page-header {
   margin-bottom: 32px;
-  flex-wrap: wrap;
 }
 
-.user-avatar-large {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  font-weight: 600;
-  color: white;
-  flex-shrink: 0;
-}
-
-.user-info {
-  flex: 1;
-}
-
-.user-info h1 {
-  font-size: 24px;
+.page-title {
+  font-size: 28px;
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.user-stats {
+.page-subtitle {
+  color: #64748b;
   font-size: 14px;
-  color: #94a3b8;
-}
-
-.exchange-btn-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  background: #10b981;
-  color: white;
-  border: none;
-  border-radius: 30px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.exchange-btn-header:hover {
-  background: #059669;
-  transform: translateY(-1px);
 }
 
 .filter-bar {
@@ -820,28 +774,47 @@ onMounted(async () => {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+.feed-section {
+  margin-top: 0;
 }
 
-.user-coin-card {
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feed-card {
   background: white;
   border-radius: 20px;
   border: 1px solid #eef2f6;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
 }
 
-.user-coin-card:hover {
+.feed-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  border-color: transparent;
 }
 
-.coin-image {
-  height: 180px;
+.card-image {
+  height: 200px;
   background: #f8fafc;
   display: flex;
   align-items: center;
@@ -849,10 +822,15 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.coin-image img {
+.card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.feed-card:hover .card-image img {
+  transform: scale(1.05);
 }
 
 .image-placeholder {
@@ -868,32 +846,39 @@ onMounted(async () => {
   stroke: #cbd5e1;
 }
 
-.coin-info {
+.card-info {
   padding: 16px;
 }
 
-.coin-title {
+.card-title {
   font-size: 16px;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 6px;
+  cursor: pointer;
 }
 
-.coin-meta {
+.card-title:hover {
+  color: #3b82f6;
+}
+
+.card-meta {
   font-size: 12px;
   color: #94a3b8;
   margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .separator {
   margin: 0 6px;
 }
 
-.coin-tags {
+.card-tags {
   display: flex;
   gap: 6px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  cursor: pointer;
 }
 
 .tag {
@@ -909,15 +894,72 @@ onMounted(async () => {
   color: #3b82f6;
 }
 
-.coin-value {
-  font-size: 16px;
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f0f2f5;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.owner-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.owner-label {
+  color: #94a3b8;
+}
+
+.owner-name {
+  color: #3b82f6;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.owner-name:hover {
+  text-decoration: underline;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.value {
   font-weight: 700;
   color: #1e293b;
+  cursor: pointer;
+}
+
+.offer-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.offer-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
 }
 
 .loading-state {
-  text-align: center;
-  padding: 80px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
   color: #94a3b8;
 }
 
@@ -928,7 +970,7 @@ onMounted(async () => {
   border-top-color: #3b82f6;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-  margin: 0 auto 16px;
+  margin-bottom: 16px;
 }
 
 @keyframes spin {
@@ -941,7 +983,6 @@ onMounted(async () => {
   background: white;
   border-radius: 20px;
   border: 1px solid #eef2f6;
-  color: #94a3b8;
 }
 
 .empty-state svg {
@@ -959,7 +1000,7 @@ onMounted(async () => {
   color: #94a3b8;
 }
 
-/* Модальное окно */
+/* Модальное окно деталей */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -979,6 +1020,10 @@ onMounted(async () => {
   max-width: 90%;
   max-height: 85vh;
   overflow: auto;
+}
+
+.modal-large {
+  width: 900px;
 }
 
 .modal-multi-exchange {
@@ -1016,6 +1061,13 @@ onMounted(async () => {
 
 .modal-close:hover {
   background: #f1f5f9;
+}
+
+.modal-body-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px;
 }
 
 .multi-exchange-body {
@@ -1090,6 +1142,11 @@ onMounted(async () => {
   border-color: #3b82f6;
 }
 
+.coin-select-item.preselected {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
 .coin-select-image {
   width: 50px;
   height: 50px;
@@ -1108,15 +1165,7 @@ onMounted(async () => {
 }
 
 .small-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-.small-placeholder svg {
-  stroke: #cbd5e1;
+  font-size: 24px;
 }
 
 .coin-select-info {
@@ -1155,7 +1204,7 @@ onMounted(async () => {
 
 .empty-coins-list {
   text-align: center;
-  padding: 20px;
+  padding: 30px;
   color: #94a3b8;
   font-size: 13px;
 }
@@ -1212,15 +1261,11 @@ onMounted(async () => {
 .modal-footer {
   padding: 20px 24px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 16px;
-  flex-wrap: wrap;
-  border-top: 1px solid #eef2f6;
 }
 
 .message-group {
-  flex: 1;
   margin-bottom: 0;
 }
 
@@ -1239,10 +1284,12 @@ onMounted(async () => {
   border-radius: 12px;
   font-size: 13px;
   resize: vertical;
+  background: white;
 }
 
 .footer-buttons {
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
 }
 
@@ -1250,7 +1297,7 @@ onMounted(async () => {
   background: #f1f5f9;
   border: none;
   padding: 10px 20px;
-  border-radius: 30px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
 }
@@ -1260,7 +1307,7 @@ onMounted(async () => {
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 30px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
 }
@@ -1268,13 +1315,6 @@ onMounted(async () => {
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.modal-body-detail {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  padding: 24px;
 }
 
 .modal-gallery {
@@ -1377,6 +1417,16 @@ onMounted(async () => {
   color: #10b981;
 }
 
+.owner-link {
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.owner-link:hover {
+  text-decoration: underline;
+}
+
 .condition-badge {
   display: inline-block;
   padding: 4px 10px;
@@ -1394,39 +1444,41 @@ onMounted(async () => {
 .condition-xf { background: #fef3c7; color: #d97706; }
 .condition-unc { background: #fef3c7; color: #d97706; }
 
-.not-found {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
+.modal-actions-detail {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f6;
 }
 
-.not-found-content {
-  text-align: center;
-  padding: 48px;
+.btn-offer-full {
+  width: 100%;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.not-found-content svg {
-  margin-bottom: 20px;
-}
-
-.not-found-content h3 {
-  margin: 16px 0 24px;
-  color: #64748b;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.not-found-content .btn-primary {
-  border-radius: 30px;
-  padding: 10px 28px;
-  text-decoration: none;
-  display: inline-block;
+.btn-offer-full:hover {
+  background: #059669;
+  transform: translateY(-1px);
 }
 
 /* Тёмная тема */
-body.dark-theme .user-info h1 {
+body.dark-theme .home-page {
+  background: #0f172a;
+}
+
+body.dark-theme .page-title {
   color: #f1f5f9;
+}
+
+body.dark-theme .page-subtitle {
+  color: #94a3b8;
 }
 
 body.dark-theme .filter-bar {
@@ -1454,16 +1506,20 @@ body.dark-theme .filter-select {
   color: #f1f5f9;
 }
 
-body.dark-theme .user-coin-card {
+body.dark-theme .filter-input::placeholder {
+  color: #64748b;
+}
+
+body.dark-theme .feed-card {
   background: #1e293b;
   border-color: #334155;
 }
 
-body.dark-theme .coin-title {
+body.dark-theme .card-title {
   color: #f1f5f9;
 }
 
-body.dark-theme .coin-meta {
+body.dark-theme .card-meta {
   color: #94a3b8;
 }
 
@@ -1477,11 +1533,15 @@ body.dark-theme .tag.condition {
   color: #3b82f6;
 }
 
-body.dark-theme .coin-value {
+body.dark-theme .card-footer {
+  border-color: #334155;
+}
+
+body.dark-theme .value {
   color: #10b981;
 }
 
-body.dark-theme .coin-image {
+body.dark-theme .card-image {
   background: #0f172a;
 }
 
@@ -1500,6 +1560,10 @@ body.dark-theme .empty-state {
 
 body.dark-theme .empty-state h3 {
   color: #94a3b8;
+}
+
+body.dark-theme .empty-state p {
+  color: #64748b;
 }
 
 body.dark-theme .modal-container {
@@ -1555,14 +1619,7 @@ body.dark-theme .condition-badge {
   color: #3b82f6;
 }
 
-body.dark-theme .exchange-btn-header {
-  background: #10b981;
-}
-
-body.dark-theme .exchange-btn-header:hover {
-  background: #059669;
-}
-
+/* Тёмная тема для множественного обмена */
 body.dark-theme .column-header h4 {
   color: #f1f5f9;
 }
@@ -1576,6 +1633,43 @@ body.dark-theme .column-summary {
   background: #0f172a;
   border-color: #334155;
   color: #cbd5e1;
+}
+
+body.dark-theme .column-summary .summary-value {
+  color: #10b981;
+}
+
+body.dark-theme .empty-coins-list {
+  color: #64748b;
+}
+
+body.dark-theme .small-placeholder {
+  color: #94a3b8;
+}
+
+body.dark-theme .coin-select-checkbox .empty-checkbox {
+  border-color: #475569;
+}
+
+body.dark-theme .exchange-summary {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .exchange-summary .summary-row {
+  color: #cbd5e1;
+}
+
+body.dark-theme .exchange-summary .summary-row.total {
+  color: #f1f5f9;
+}
+
+body.dark-theme .exchange-summary .summary-value {
+  color: #10b981;
+}
+
+body.dark-theme .exchange-summary .summary-divider {
+  background: #334155;
 }
 
 body.dark-theme .coin-select-item {
@@ -1595,29 +1689,14 @@ body.dark-theme .coin-select-name {
   color: #f1f5f9;
 }
 
-body.dark-theme .small-placeholder svg {
-  stroke: #475569;
+body.dark-theme .coin-select-meta {
+  color: #94a3b8;
 }
 
-body.dark-theme .empty-coins-list {
-  color: #64748b;
-}
-
-body.dark-theme .exchange-summary {
+body.dark-theme .form-textarea {
   background: #0f172a;
   border-color: #334155;
-}
-
-body.dark-theme .exchange-summary .summary-row {
-  color: #cbd5e1;
-}
-
-body.dark-theme .exchange-summary .summary-row.total {
   color: #f1f5f9;
-}
-
-body.dark-theme .exchange-summary .summary-divider {
-  background: #334155;
 }
 
 body.dark-theme .btn-secondary {
@@ -1627,16 +1706,6 @@ body.dark-theme .btn-secondary {
 
 body.dark-theme .message-group label {
   color: #cbd5e1;
-}
-
-body.dark-theme .form-textarea {
-  background: #0f172a;
-  border-color: #334155;
-  color: #f1f5f9;
-}
-
-body.dark-theme .not-found-content h3 {
-  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
@@ -1654,34 +1723,6 @@ body.dark-theme .not-found-content h3 {
   
   .filter-group {
     min-width: 100%;
-  }
-  
-  .user-header {
-    flex-direction: column;
-    text-align: center;
-    justify-content: center;
-  }
-  
-  .user-avatar-large {
-    margin: 0 auto;
-  }
-  
-  .exchange-btn-header {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-  }
-  
-  .footer-buttons {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .message-group {
-    width: 100%;
   }
 }
 </style>

@@ -6,7 +6,7 @@
         <div class="info-content">
           <div class="logo">
             <span class="logo-mark">C</span>
-            <span class="logo-text">CoinClave</span>
+            <span class="logo-text">Coinclave</span>
           </div>
           <h1>Управление нумизматической коллекцией</h1>
           <p>Систематизируйте свои монеты, отслеживайте стоимость и обменивайтесь с другими коллекционерами</p>
@@ -106,10 +106,10 @@
           </div>
           
           <div v-if="error" class="error-alert">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" fill="none" stroke="#ef4444" stroke-width="2"/>
+              <rect x="10.5" y="6" width="3" height="9" rx="1.5" fill="#ef4444"/>
+              <circle cx="12" cy="18" r="1.5" fill="#ef4444"/>
             </svg>
             {{ error }}
           </div>
@@ -277,6 +277,37 @@ const handleLogin = async () => {
   font-size: 14px;
 }
 
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  color: #475569;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input.error {
+  border-color: #ef4444;
+}
+
 .password-wrapper {
   position: relative;
 }
@@ -310,6 +341,25 @@ const handleLogin = async () => {
   margin-top: 8px;
 }
 
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-footer {
   text-align: center;
   margin-top: 24px;
@@ -332,7 +382,7 @@ const handleLogin = async () => {
   padding: 12px 16px;
   background: #fef2f2;
   border: 1px solid #fee2e2;
-  border-radius: 12px;
+  border-radius: 30px;
   color: #ef4444;
   font-size: 13px;
   display: flex;

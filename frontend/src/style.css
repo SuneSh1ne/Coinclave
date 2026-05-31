@@ -6,15 +6,548 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f5f7fa;
-  color: #1a202c;
+  background: #f8fafc;
+  color: #1e293b;
   line-height: 1.5;
+  transition: background 0.3s, color 0.3s;
+}
+
+body:has(.modal-overlay) {
+  overflow: hidden;
 }
 
 .container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 32px 24px;
+}
+
+/* ========== ТЁМНАЯ ТЕМА ========== */
+body.dark-theme {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+/* Навбар */
+body.dark-theme .navbar {
+  background: rgba(30, 41, 59, 0.98);
+  border-color: #334155;
+}
+
+body.dark-theme .logo-text {
+  color: #f1f5f9;
+}
+
+body.dark-theme .nav-item {
+  color: #94a3b8;
+}
+
+body.dark-theme .nav-item:hover {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+body.dark-theme .nav-item.active {
+  background: #1e3a5f;
+  color: #3b82f6;
+}
+
+body.dark-theme .register-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+body.dark-theme .avatar {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+/* Выпадающие панели */
+body.dark-theme .dropdown-panel {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .dropdown-header {
+  border-color: #334155;
+}
+
+body.dark-theme .dropdown-header h4 {
+  color: #f1f5f9;
+}
+
+body.dark-theme .notification-item {
+  border-color: #334155;
+}
+
+body.dark-theme .notification-item.unread {
+  background: #1e3a5f;
+}
+
+body.dark-theme .notification-content p {
+  color: #cbd5e1;
+}
+
+body.dark-theme .user-name {
+  color: #f1f5f9;
+}
+
+body.dark-theme .dropdown-item:hover {
+  background: #334155;
+}
+
+/* Карточки */
+body.dark-theme .glass-card,
+body.dark-theme .card,
+body.dark-theme .profile-settings,
+body.dark-theme .settings-card,
+body.dark-theme .avatar-card,
+body.dark-theme .listing-card,
+body.dark-theme .feed-card,
+body.dark-theme .coin-card,
+body.dark-theme .offer-card,
+body.dark-theme .form-card,
+body.dark-theme .detail-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* Карточка монеты без изображения */
+body.dark-theme .coin-image .image-placeholder,
+body.dark-theme .listing-image .image-placeholder,
+body.dark-theme .card-image .image-placeholder {
+  background: #0f172a;
+}
+
+body.dark-theme .no-image {
+  color: #475569;
+}
+
+/* Заголовки */
+body.dark-theme .page-title,
+body.dark-theme .coin-title,
+body.dark-theme .card-title,
+body.dark-theme .settings-title,
+body.dark-theme .profile-title,
+body.dark-theme .section-title,
+body.dark-theme .hero-title,
+body.dark-theme .coin-name {
+  color: #f1f5f9;
+}
+
+/* Подзаголовки */
+body.dark-theme .page-subtitle,
+body.dark-theme .coin-meta,
+body.dark-theme .card-meta,
+body.dark-theme .info-label,
+body.dark-theme .form-hint,
+body.dark-theme .hero-subtitle,
+body.dark-theme .stat-label,
+body.dark-theme .listing-meta,
+body.dark-theme .owner {
+  color: #94a3b8;
+}
+
+/* Статистика в коллекции */
+body.dark-theme .stat-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .stat-value {
+  color: #10b981;
+}
+
+body.dark-theme .stat-label {
+  color: #94a3b8;
+}
+
+/* Кнопка экспорт */
+body.dark-theme .btn-outline {
+  background: transparent;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+body.dark-theme .btn-outline:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: transparent;
+}
+
+/* Формы и поля ввода */
+body.dark-theme .form-group input,
+body.dark-theme .form-group select,
+body.dark-theme .filter-input,
+body.dark-theme .filter-select,
+body.dark-theme .disabled-input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+body.dark-theme .form-group input:focus,
+body.dark-theme .form-group select:focus,
+body.dark-theme .filter-input:focus,
+body.dark-theme .filter-select:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+body.dark-theme .form-group label {
+  color: #cbd5e1;
+}
+
+/* Фильтры */
+body.dark-theme .filter-bar,
+body.dark-theme .filters-bar {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .reset-btn,
+body.dark-theme .btn-secondary {
+  background: #334155;
+  color: #f1f5f9;
+  border: none;
+}
+
+body.dark-theme .reset-btn:hover,
+body.dark-theme .btn-secondary:hover {
+  background: #475569;
+}
+
+/* Кнопки */
+body.dark-theme .btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+body.dark-theme .btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+body.dark-theme .btn-success {
+  background: #10b981;
+  color: white;
+}
+
+/* Таблицы и строки */
+body.dark-theme .info-row {
+  border-color: #334155;
+}
+
+body.dark-theme .info-value {
+  color: #f1f5f9;
+}
+
+/* Теги */
+body.dark-theme .tag {
+  background: #334155;
+  color: #94a3b8;
+}
+
+body.dark-theme .tag.condition {
+  background: #1e3a5f;
+  color: #3b82f6;
+}
+
+/* Значения стоимости */
+body.dark-theme .value,
+body.dark-theme .coin-value,
+body.dark-theme .estimated-value {
+  color: #10b981;
+}
+
+/* Пустые состояния */
+body.dark-theme .empty-state {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+body.dark-theme .empty-state h3 {
+  color: #94a3b8;
+}
+
+body.dark-theme .empty-state p {
+  color: #64748b;
+}
+
+/* Разделители */
+body.dark-theme .divider,
+body.dark-theme .dropdown-divider,
+body.dark-theme .card-footer,
+body.dark-theme .detail-nav {
+  border-color: #334155;
+}
+
+/* Модальные окна */
+body.dark-theme .modal-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .modal-header {
+  border-color: #334155;
+}
+
+body.dark-theme .modal-header h3 {
+  color: #f1f5f9;
+}
+
+body.dark-theme .modal-close {
+  color: #94a3b8;
+}
+
+/* Страница профиля */
+body.dark-theme .danger-zone {
+  background: #2a1a1a;
+  border-color: #7f1a1a;
+}
+
+body.dark-theme .theme-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+body.dark-theme .theme-btn.active {
+  background: #1e3a5f;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+/* Hero секция */
+body.dark-theme .hero-section {
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+}
+
+/* Вкладки в обмене */
+body.dark-theme .tabs {
+  border-color: #334155;
+}
+
+body.dark-theme .tab-btn {
+  color: #94a3b8;
+}
+
+body.dark-theme .tab-btn:hover {
+  color: #3b82f6;
+}
+
+body.dark-theme .tab-btn.active {
+  color: #3b82f6;
+}
+
+body.dark-theme .tab-btn.active::after {
+  background: #3b82f6;
+}
+
+/* Область загрузки изображений */
+body.dark-theme .upload-area {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .upload-area:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+/* Превью изображений */
+body.dark-theme .preview-item {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+/* Форма добавления монеты */
+body.dark-theme .form-page .form-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .form-header {
+  border-color: #334155;
+}
+
+body.dark-theme .form-actions {
+  border-color: #334155;
+}
+
+/* Уведомления */
+body.dark-theme .notifications-dropdown {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* Обмен - кнопка в меню */
+body.dark-theme .nav-item.exchange.active {
+  background: #1a3a2a;
+  color: #10b981;
+}
+
+/* Скроллбар */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+body.dark-theme ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+body.dark-theme ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Тёмная тема для страницы коллекции */
+body.dark-theme .collection-page .stat-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .collection-page .stat-value {
+  color: #10b981;
+}
+
+body.dark-theme .collection-page .stat-label {
+  color: #94a3b8;
+}
+
+body.dark-theme .btn-outline {
+  background: transparent;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+body.dark-theme .btn-outline:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: transparent;
+}
+
+/* Тёмная тема для страницы обмена */
+body.dark-theme .exchange-page .tabs {
+  border-color: #334155;
+}
+
+body.dark-theme .exchange-page .tab-btn {
+  color: #94a3b8;
+}
+
+body.dark-theme .exchange-page .tab-btn:hover {
+  color: #3b82f6;
+}
+
+body.dark-theme .exchange-page .tab-btn.active {
+  color: #3b82f6;
+}
+
+body.dark-theme .exchange-page .filter-bar {
+  background: #1e293b;
+}
+
+body.dark-theme .exchange-page .listing-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .exchange-page .listing-title {
+  color: #f1f5f9;
+}
+
+body.dark-theme .exchange-page .listing-meta {
+  color: #94a3b8;
+}
+
+body.dark-theme .exchange-page .owner {
+  color: #94a3b8;
+}
+
+body.dark-theme .exchange-page .value {
+  color: #10b981;
+}
+
+/* Тёмная тема для формы добавления монеты */
+body.dark-theme .form-page .form-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .form-page .form-header {
+  border-color: #334155;
+}
+
+body.dark-theme .form-page .form-header h1 {
+  color: #f1f5f9;
+}
+
+body.dark-theme .form-page .form-header p {
+  color: #94a3b8;
+}
+
+body.dark-theme .form-page .upload-area {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .form-page .upload-area:hover {
+  background: #1e293b;
+  border-color: #3b82f6;
+}
+
+body.dark-theme .form-page .upload-btn {
+  color: #3b82f6;
+}
+
+body.dark-theme .form-page .preview-item {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark-theme .form-page .form-actions {
+  border-color: #334155;
+}
+
+/* Тёмная тема для уведомлений */
+body.dark-theme .notifications-dropdown {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .notifications-header {
+  border-color: #334155;
+}
+
+body.dark-theme .notifications-header h4 {
+  color: #f1f5f9;
+}
+
+body.dark-theme .notification-item {
+  border-color: #334155;
+}
+
+body.dark-theme .notification-item.unread {
+  background: #1e3a5f;
+}
+
+body.dark-theme .notification-content p {
+  color: #cbd5e1;
 }
 
 /* Анимации */
@@ -29,39 +562,7 @@ body {
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Карточки */
-.glass-card {
-  background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-}
-
-/* Кнопки */
+/* Общие классы */
 .btn {
   padding: 10px 24px;
   border: none;
@@ -84,10 +585,6 @@ body {
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-.btn-primary:active {
-  transform: translateY(0);
-}
-
 .btn-danger {
   background: #ef4444;
   color: white;
@@ -95,16 +592,6 @@ body {
 
 .btn-danger:hover {
   background: #dc2626;
-}
-
-.btn-secondary {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
-}
-
-.btn-secondary:hover {
-  background: #e2e8f0;
 }
 
 .btn-success {
@@ -125,49 +612,9 @@ body {
 .btn-outline:hover {
   border-color: #3b82f6;
   color: #3b82f6;
-  background: #eff6ff;
+  background: transparent;
 }
 
-/* Формы */
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  font-size: 13px;
-  color: #475569;
-  letter-spacing: 0.3px;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 14px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  background: white;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group input::placeholder {
-  color: #cbd5e1;
-}
-
-/* Сетка */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -175,42 +622,35 @@ body {
   animation: fadeInUp 0.4s ease-out;
 }
 
-/* Состояния загрузки */
 .loading {
   text-align: center;
   padding: 60px;
   color: #94a3b8;
 }
 
-/* Пустые состояния */
-.empty {
+.empty-state {
   text-align: center;
-  padding: 80px 40px;
+  padding: 60px 40px;
   background: white;
   border-radius: 20px;
   color: #94a3b8;
-  border: 1px dashed #cbd5e1;
+  border: 1px solid #eef2f6;
 }
 
-.empty p {
-  margin-bottom: 20px;
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
 }
 
-/* Скроллбар */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.empty-state p {
+  margin-bottom: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.btn-add {
+  display: inline-block;
+  padding: 10px 24px;
+  font-size: 14px;
+  margin-top: 16px;
 }

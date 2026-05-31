@@ -15,11 +15,14 @@ async def search_users(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Поиск других пользователей по email"""
-    
     result = await db.execute(
         select(User)
-        .where(User.email.ilike(f"%{query}%"))
+        .where(
+            or_(
+                User.email.ilike(f"%{query}%"),
+                User.username.ilike(f"%{query}%")
+            )
+        )
         .where(User.id != current_user.id)
         .limit(20)
     )
@@ -40,6 +43,7 @@ async def search_users(
         response.append({
             "id": user.id,
             "email": user.email,
+            "username": user.username or user.email.split('@')[0],
             "coins_count": coins_count,
             "total_value": total_value
         })
@@ -122,6 +126,7 @@ async def get_user_stats(
     return {
         "user_id": user_id,
         "email": user.email,
+        "username": user.username,
         "coins_count": coins_count,
         "total_value": total_value
     }

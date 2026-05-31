@@ -3,31 +3,13 @@
     <div class="coin-image">
       <img v-if="coin.images && coin.images[0]" :src="getImageUrl(coin.images[0].image_path)" :alt="coin.name">
       <div v-else class="image-placeholder">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+          <circle cx="8.5" cy="8.5" r="2.5"/>
+          <polyline points="21 15 16 10 5 21"/>
         </svg>
       </div>
       <div v-if="isOnExchange" class="exchange-badge">Exchange</div>
-      <div class="card-actions">
-        <router-link :to="`/coin/${coin.id}`" class="action-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-        </router-link>
-        <router-link :to="`/coin/${coin.id}/edit`" class="action-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 3l4 4-7 7H10v-4l7-7z"/>
-            <path d="M4 20h16"/>
-          </svg>
-        </router-link>
-        <button class="action-btn delete" @click.stop="$emit('delete')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M9 3h6v4H9z"/>
-          </svg>
-        </button>
-      </div>
     </div>
     
     <div class="coin-info">
@@ -84,11 +66,11 @@ const getConditionName = (condition) => {
     poor: 'Poor',
     fair: 'Fair',
     good: 'Good',
-    very_good: 'VG',
+    very_good: 'Very Good',
     fine: 'Fine',
-    very_fine: 'VF',
-    extremely_fine: 'XF',
-    uncirculated: 'UNC'
+    very_fine: 'Very Fine',
+    extremely_fine: 'Extremely Fine',
+    uncirculated: 'Uncirculated'
   }
   return conditions[condition] || condition
 }
@@ -126,7 +108,7 @@ const getConditionClass = (condition) => {
 
 .coin-image {
   position: relative;
-  height: 220px;
+  height: 200px;
   background: #f8fafc;
   overflow: hidden;
 }
@@ -150,6 +132,10 @@ const getConditionClass = (condition) => {
   background: #f8fafc;
 }
 
+.image-placeholder svg {
+  stroke: #cbd5e1;
+}
+
 .exchange-badge {
   position: absolute;
   top: 12px;
@@ -161,45 +147,6 @@ const getConditionClass = (condition) => {
   padding: 4px 10px;
   border-radius: 20px;
   letter-spacing: 0.5px;
-}
-
-.card-actions {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: flex;
-  gap: 6px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.coin-card:hover .card-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: #64748b;
-  transition: all 0.2s ease;
-  border: 1px solid #e2e8f0;
-}
-
-.action-btn:hover {
-  background: #f1f5f9;
-  color: #3b82f6;
-}
-
-.action-btn.delete:hover {
-  background: #fef2f2;
-  color: #ef4444;
-  border-color: #fee2e2;
 }
 
 .coin-info {
@@ -262,5 +209,44 @@ const getConditionClass = (condition) => {
   font-size: 18px;
   font-weight: 700;
   color: #1e293b;
+}
+
+/* Тёмная тема */
+body.dark-theme .coin-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .coin-title {
+  color: #f1f5f9;
+}
+
+body.dark-theme .coin-meta {
+  color: #94a3b8;
+}
+
+body.dark-theme .metal {
+  background: #334155;
+  color: #94a3b8;
+}
+
+body.dark-theme .value {
+  color: #10b981;
+}
+
+body.dark-theme .coin-value {
+  border-color: #334155;
+}
+
+body.dark-theme .coin-image {
+  background: #0f172a;
+}
+
+body.dark-theme .image-placeholder {
+  background: #0f172a;
+}
+
+body.dark-theme .image-placeholder svg {
+  stroke: #475569;
 }
 </style>

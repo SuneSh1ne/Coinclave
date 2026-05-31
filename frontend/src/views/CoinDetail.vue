@@ -2,7 +2,7 @@
   <div class="detail-page" v-if="coin">
     <div class="detail-container">
       <div class="detail-nav">
-        <router-link to="/" class="back-link">
+        <router-link to="/collection" class="back-link">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
           </svg>
@@ -26,14 +26,14 @@
       </div>
 
       <div class="detail-content">
-        <!-- Галерея изображений -->
         <div class="detail-gallery">
           <div class="main-image">
             <img v-if="currentImage" :src="getImageUrl(currentImage.image_path)" :alt="coin.name">
             <div v-else class="no-image">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="2" width="20" height="20" rx="2.18"/>
+                <circle cx="8.5" cy="8.5" r="2.5"/>
+                <polyline points="21 15 16 10 5 21"/>
               </svg>
             </div>
           </div>
@@ -51,7 +51,6 @@
           </div>
         </div>
 
-        <!-- Информация о монете -->
         <div class="detail-info">
           <h1 class="coin-name">{{ coin.name }}</h1>
           
@@ -90,20 +89,12 @@
             </div>
           </div>
 
-          <div class="exchange-section">
-            <div v-if="isOnExchange" class="exchange-status active">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 2l4 4-4 4M3 12h15M7 2l-4 4 4 4"/>
-                <path d="M21 12h-15M17 22l4-4-4-4"/>
-              </svg>
-              <span>Монета выставлена на обмен</span>
-            </div>
-            <button 
-              @click="toggleExchange" 
-              :class="isOnExchange ? 'btn-outline' : 'btn-exchange'"
-            >
-              {{ isOnExchange ? 'Снять с обмена' : 'Выставить на обмен' }}
-            </button>
+          <div v-if="isOnExchange" class="exchange-status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 2l4 4-4 4M3 12h15M7 2l-4 4 4 4"/>
+              <path d="M21 12h-15M17 22l4-4-4-4"/>
+            </svg>
+            <span>Эта монета доступна для обмена</span>
           </div>
         </div>
       </div>
@@ -117,13 +108,13 @@
   
   <div v-else class="not-found">
     <div class="not-found-content">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="12" y1="8" x2="12" y2="12"/>
-        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="#ef4444" stroke-width="2"/>
+        <rect x="10.5" y="6" width="3" height="9" rx="1.5" fill="#ef4444"/>
+        <circle cx="12" cy="18" r="1.5" fill="#ef4444"/>
       </svg>
       <h3>Монета не найдена</h3>
-      <router-link to="/" class="btn-primary">Вернуться в коллекцию</router-link>
+      <router-link to="/collection" class="btn-primary">Вернуться в коллекцию</router-link>
     </div>
   </div>
 </template>
@@ -179,25 +170,11 @@ const checkExchangeStatus = async () => {
   } catch (e) {}
 }
 
-const toggleExchange = async () => {
-  try {
-    if (isOnExchange.value) {
-      await api.delete(`/exchange/listings/${coin.value.id}`)
-      isOnExchange.value = false
-    } else {
-      await api.post('/exchange/listings', { coin_id: coin.value.id })
-      isOnExchange.value = true
-    }
-  } catch (e) {
-    alert(e.response?.data?.detail || 'Ошибка')
-  }
-}
-
 const deleteCoin = async () => {
   if (confirm('Вы уверены, что хотите удалить эту монету? Данные будут потеряны.')) {
     try {
       await api.delete(`/api/coins/${coin.value.id}`)
-      router.push('/')
+      router.push('/collection')
     } catch (e) {
       alert('Ошибка при удалении')
     }
@@ -246,16 +223,19 @@ onMounted(async () => {
 }
 
 .back-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   color: #64748b;
   text-decoration: none;
   font-size: 14px;
-  transition: color 0.2s;
+  padding: 8px 16px;
+  border-radius: 30px;
+  transition: all 0.2s;
 }
 
 .back-link:hover {
+  background: #f1f5f9;
   color: #3b82f6;
 }
 
@@ -269,7 +249,7 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  border-radius: 10px;
+  border-radius: 30px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -284,6 +264,15 @@ onMounted(async () => {
 
 .btn-secondary:hover {
   background: #e2e8f0;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
 }
 
 .detail-content {
@@ -319,7 +308,10 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #cbd5e1;
+}
+
+.no-image svg {
+  stroke: #cbd5e1;
 }
 
 .thumbnail-list {
@@ -416,7 +408,7 @@ onMounted(async () => {
 .condition-badge {
   display: inline-block;
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 30px;
   font-size: 12px;
   font-weight: 500;
 }
@@ -430,56 +422,15 @@ onMounted(async () => {
 .condition-xf { background: #fef3c7; color: #d97706; }
 .condition-unc { background: #fef3c7; color: #d97706; }
 
-.exchange-section {
+.exchange-status {
   margin-top: 24px;
   padding-top: 24px;
   border-top: 1px solid #eef2f6;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.exchange-status {
-  display: flex;
-  align-items: center;
   gap: 8px;
   font-size: 13px;
-}
-
-.exchange-status.active {
   color: #10b981;
-}
-
-.btn-exchange {
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 10px 24px;
-  border-radius: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-exchange:hover {
-  background: #059669;
-}
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  padding: 10px 24px;
-  border-radius: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-outline:hover {
-  border-color: #ef4444;
-  color: #ef4444;
 }
 
 .loading-page {
@@ -501,6 +452,10 @@ onMounted(async () => {
   margin-bottom: 16px;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .not-found {
   display: flex;
   align-items: center;
@@ -513,9 +468,90 @@ onMounted(async () => {
   padding: 48px;
 }
 
+.not-found-content svg {
+  margin-bottom: 20px;
+}
+
 .not-found-content h3 {
   margin: 16px 0 24px;
   color: #64748b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.not-found-content .btn-primary {
+  border-radius: 30px;
+  padding: 10px 28px;
+  text-decoration: none;
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.not-found-content .btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+/* Тёмная тема */
+body.dark-theme .detail-container {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .detail-nav {
+  border-color: #334155;
+}
+
+body.dark-theme .back-link {
+  color: #94a3b8;
+}
+
+body.dark-theme .back-link:hover {
+  background: #334155;
+  color: #3b82f6;
+}
+
+body.dark-theme .coin-name {
+  color: #f1f5f9;
+  border-color: #334155;
+}
+
+body.dark-theme .info-row {
+  border-color: #334155;
+}
+
+body.dark-theme .info-label {
+  color: #94a3b8;
+}
+
+body.dark-theme .info-value {
+  color: #f1f5f9;
+}
+
+body.dark-theme .info-row.highlight {
+  background: #0f172a;
+}
+
+body.dark-theme .main-image {
+  background: #0f172a;
+}
+
+body.dark-theme .no-image svg {
+  stroke: #475569;
+}
+
+body.dark-theme .exchange-status {
+  border-color: #334155;
+}
+
+body.dark-theme .not-found-content h3 {
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {

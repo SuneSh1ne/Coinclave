@@ -2,7 +2,7 @@
   <div class="collection-page">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Коллекция</h1>
+        <h1 class="page-title">Моя коллекция</h1>
         <p class="page-subtitle">Управление вашими нумизматическими ценностями</p>
       </div>
       <div class="header-stats">
@@ -33,15 +33,9 @@
     </div>
 
     <div v-else-if="coinsStore.items.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
-        </svg>
-      </div>
       <h3>Коллекция пуста</h3>
       <p>Добавьте первую монету, чтобы начать систематизацию</p>
-      <router-link to="/add" class="btn-primary">Добавить монету</router-link>
+      <router-link to="/add" class="btn-add-empty">+ Добавить монету</router-link>
     </div>
 
     <div v-else>
@@ -51,7 +45,6 @@
           :key="coin.id"
           :coin="coin"
           @click="goToDetail(coin.id)"
-          @delete="deleteCoin(coin.id)"
         />
       </div>
       
@@ -79,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCoinsStore } from '../stores/coins'
 import FilterBar from '../components/FilterBar.vue'
@@ -100,19 +93,13 @@ const fetchTotalValue = async () => {
   try {
     const res = await api.get('/api/coins/stats/total-value')
     totalValue.value = res.data.total_value
-  } catch (e) {}
+  } catch (e) {
+    console.error('Ошибка загрузки общей стоимости:', e)
+  }
 }
 
 const goToDetail = (id) => {
   router.push(`/coin/${id}`)
-}
-
-const deleteCoin = async (id) => {
-  if (confirm('Удалить монету из коллекции?')) {
-    await coinsStore.deleteCoin(id)
-    await fetchTotalValue()
-    await coinsStore.fetchCoins(limit.value, offset.value)
-  }
 }
 
 const changePage = (newOffset) => {
@@ -121,8 +108,32 @@ const changePage = (newOffset) => {
 }
 
 const exportCollection = async () => {
-  const format = confirm('Экспорт в формате JSON? (Отмена - CSV)') ? 'json' : 'csv'
-  window.open(`http://localhost:8000/api/coins/export/${format}`, '_blank')
+  const format = confirm('Экспорт в Excel (CSV)? (Отмена - JSON)') ? 'csv' : 'json'
+  
+  try {
+    const token = localStorage.getItem('token')
+    const response = await fetch(`http://localhost:8000/api/coins/export/${format}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error('Ошибка экспорта')
+    }
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `coinclave_collection.${format}`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  } catch (e) {
+    alert('Ошибка при экспорте коллекции')
+  }
 }
 
 onMounted(() => {
@@ -191,7 +202,7 @@ onMounted(() => {
   padding: 8px 20px;
   background: transparent;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 30px;
   font-size: 14px;
   font-weight: 500;
   color: #475569;
@@ -232,24 +243,57 @@ onMounted(() => {
   text-align: center;
   padding: 80px 40px;
   background: white;
-  border-radius: 24px;
+  border-radius: 20px;
   border: 1px solid #eef2f6;
-}
-
-.empty-icon {
-  margin-bottom: 20px;
 }
 
 .empty-state h3 {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: #64748b;
   margin-bottom: 8px;
 }
 
 .empty-state p {
   color: #94a3b8;
   margin-bottom: 24px;
+}
+
+.btn-add-empty {
+  display: inline-block;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.btn-add-empty:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .pagination {
@@ -266,7 +310,7 @@ onMounted(() => {
   padding: 8px 20px;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 30px;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
@@ -285,5 +329,74 @@ onMounted(() => {
 .page-info {
   font-size: 13px;
   color: #64748b;
+}
+
+/* Тёмная тема */
+body.dark-theme .collection-page {
+  background: #0f172a;
+}
+
+body.dark-theme .page-title {
+  color: #f1f5f9;
+}
+
+body.dark-theme .page-subtitle {
+  color: #94a3b8;
+}
+
+body.dark-theme .stat-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .stat-value {
+  color: #10b981;
+}
+
+body.dark-theme .stat-label {
+  color: #94a3b8;
+}
+
+body.dark-theme .btn-outline {
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+body.dark-theme .btn-outline:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #1e3a5f;
+}
+
+body.dark-theme .empty-state {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark-theme .empty-state h3 {
+  color: #94a3b8;
+}
+
+body.dark-theme .empty-state p {
+  color: #64748b;
+}
+
+body.dark-theme .pagination {
+  border-color: #334155;
+}
+
+body.dark-theme .page-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+body.dark-theme .page-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+body.dark-theme .page-info {
+  color: #94a3b8;
 }
 </style>

@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import os
 
-from app.routers import auth, coins, users, exchange, notifications
+from app.routers import auth, coins, users, exchange, notifications, public
 
 # Create uploads directory if not exists
 os.makedirs("uploads", exist_ok=True)
@@ -18,12 +19,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Подключаем статику для отдачи изображений
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # Routers
 app.include_router(auth.router)
 app.include_router(coins.router)
 app.include_router(users.router)
 app.include_router(exchange.router)
 app.include_router(notifications.router)
+app.include_router(public.router)
 
 @app.get("/")
 async def root():

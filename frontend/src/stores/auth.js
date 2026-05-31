@@ -5,28 +5,30 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     token: localStorage.getItem('token'),
-    unreadCount: 0
+    isAuthenticated: !!localStorage.getItem('token')
   }),
   
   actions: {
-    async register(email, password) {
-      const response = await api.post('/auth/register', { email, password })
+    async register(email, username, password) {
+      const response = await api.post('/auth/register', { email, username, password })
       return response.data
     },
     
     async login(email, password) {
       const response = await api.post('/auth/login', { email, password })
       this.token = response.data.access_token
+      this.isAuthenticated = true
       localStorage.setItem('token', this.token)
       await this.fetchUserInfo()
       return response.data
     },
     
     async fetchUserInfo() {
-      // Получаем статистику текущего пользователя
       try {
-        const response = await api.get('/api/coins/stats/total-value')
-        this.user = { total_value: response.data.total_value }
+        const response = await api.get('/auth/me')
+        this.user = response.data
+        localStorage.setItem('username', this.user.username || '')
+        localStorage.setItem('userEmail', this.user.email)
       } catch (e) {
         console.error(e)
       }
@@ -36,15 +38,16 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await api.get('/notifications/unread-count')
         this.unreadCount = response.data.unread_count
-      } catch (e) {
-        console.error(e)
-      }
+      } catch (e) {}
     },
     
     logout() {
       this.token = null
       this.user = null
+      this.isAuthenticated = false
       localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      localStorage.removeItem('userEmail')
     }
   }
 })

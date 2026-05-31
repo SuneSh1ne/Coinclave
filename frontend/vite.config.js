@@ -20,12 +20,16 @@ export default defineConfig({
       },
       '/exchange': {
         target: 'http://localhost:8000',
-        changeOrigin: true
+        changeOrigin: true,
       },
       '/notifications': {
         target: 'http://localhost:8000',
         changeOrigin: true
-      }
+      },
+      '/public': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
     }
   }
 })

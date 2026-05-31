@@ -3,9 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
-from app.schemas.user import UserCreate, UserLogin, UserResponse, Token
+from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, UserUpdate
 from app.models import User
 from app.services.auth import verify_password, get_password_hash, create_access_token
+from app.dependencies import get_current_user  # ДОБАВИТЬ ЭТУ СТРОКУ
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -21,10 +22,16 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
             detail="Email already registered"
         )
     
+    # Если username не указан, используем часть email до @
+    username = user_data.username
+    if not username:
+        username = user_data.email.split('@')[0]
+    
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
+        username=username,
         password_hash=hashed_password
     )
     
@@ -36,7 +43,6 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    # Find user
     result = await db.execute(select(User).where(User.email == user_data.email))
     user = result.scalar_one_or_none()
     
@@ -46,7 +52,31 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
             detail="Incorrect email or password"
         )
     
-    # Create token
     access_token = create_access_token(data={"sub": str(user.id)})
     
     return Token(access_token=access_token)
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user)
+):
+    """Получить информацию о текущем пользователе"""
+    return current_user
+
+@router.put("/me", response_model=UserResponse)
+async def update_current_user(
+    user_data: UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Обновить информацию о текущем пользователе"""
+    
+    if user_data.username is not None:
+        current_user.username = user_data.username
+    if user_data.theme is not None:
+        current_user.theme = user_data.theme
+    
+    await db.commit()
+    await db.refresh(current_user)
+    
+    return current_user
