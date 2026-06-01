@@ -5,7 +5,19 @@
       <div class="auth-info">
         <div class="info-content">
           <div class="logo">
-            <span class="logo-mark">C</span>
+            <span class="logo-mark">
+              <svg width="36" height="36" viewBox="0 0 60 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Первая монета (золотая) -->
+                <circle cx="20" cy="18" r="14" fill="#FBBF24" stroke="#D97706" stroke-width="1.5"/>
+                <circle cx="20" cy="18" r="10" fill="#FDE68A" stroke="#D97706" stroke-width="1"/>
+                <text x="20" y="23" text-anchor="middle" font-size="11" fill="#D97706" font-weight="bold">$</text>
+              
+                <!-- Вторая монета (серебряная) -->
+                <circle cx="38" cy="26" r="14" fill="#C0C0C0" stroke="#8B7355" stroke-width="1.5"/>
+                <circle cx="38" cy="26" r="10" fill="#E8E8E8" stroke="#8B7355" stroke-width="1"/>
+                <text x="38" y="31" text-anchor="middle" font-size="11" fill="#8B7355" font-weight="bold">₽</text>
+              </svg>
+            </span>
             <span class="logo-text">Coinclave</span>
           </div>
           <h1>Присоединяйтесь к сообществу</h1>
