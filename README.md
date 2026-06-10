@@ -37,7 +37,7 @@
 ### 1. Клонирование репозитория
 
 ```bash
-git clone https://github.com/your-username/coinclave.git
+git clone https://github.com/SuneSh1ne/coinclave.git
 cd coinclave
 ```
 
